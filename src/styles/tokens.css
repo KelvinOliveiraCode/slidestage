@@ -1,0 +1,94 @@
+:root {
+  /* Paleta escura fixa (direcao do dono + tipo de ferramenta criativa).
+     Todo par texto/fundo foi medido com o contrast-checker da skill
+     antislop-human; o menor ratio do app é 6.52:1 (texto normal pede 4.5). */
+  --bg: #0b0d10;
+  --surface: #12161b;
+  --surface-2: #171c22;
+  --surface-3: #1d242c;
+  --line: #262e37;
+  --line-2: #303a45;
+  --ink: #f2f5f7;        /* 17.77:1 no --bg */
+  --ink-2: #a8b4be;      /* 8.59:1 no --surface */
+  --ink-3: #8a97a3;      /* 6.52:1 no --bg */
+  --accent: #f5b841;     /* 10.22:1 no --surface */
+  --accent-ink: #171003; /* 10.63:1 sobre o accent */
+  --danger: #ff8a7a;     /* 7.48:1 no --surface-2 */
+  --ok: #5bd98a;         /* 9.58:1 no --surface-2 */
+  --info: #7fd0ff;       /* 10.09:1 no --surface-2 */
+
+  --r1: 6px;
+  --r2: 10px;
+  --r3: 16px;
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", "Cascadia Mono", Consolas, "Courier New", monospace;
+
+  /* Uma única sombra, reservada para camadas que flutuam sobre o app. */
+  --overlay: 0 18px 48px rgb(0 0 0 / 0.6);
+
+  --dur: 120ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r1);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Barras de rolagem discretas, compativeis com o fundo escuro. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 99px;
+  border: 3px solid var(--bg);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}

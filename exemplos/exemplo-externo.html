@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deck de exemplo externo</title>
+    <style>
+      :root {
+        --ink: #f2f5f7;
+        --muted: #a8b4be;
+        --bg: #10151c;
+        --surface: #171c22;
+        --line: #303a45;
+        --accent: #7fd0ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 64px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .kicker {
+        color: var(--accent);
+        font-weight: 650;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      h1 { font-size: 52px; line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
+      p { font-size: 20px; line-height: 1.5; color: var(--muted); margin: 0; }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 24px;
+      }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <span class="kicker">Exemplo</span>
+      <h1>Este HTML foi feito fora do SlideStage</h1>
+      <p>
+        Ele abre no app, da para editar o codigo e mexe-lhe os elementos no canvas.
+        Nao tem slides no formato do app, entao o trilho de slides avisa isso.
+      </p>
+      <div class="card">
+        <p>
+          Para ganhar navegacao por slides, comece por um modelo em Modelos.
+          Link de teste: <a href="https://exemplo.com">exemplo.com</a>.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
