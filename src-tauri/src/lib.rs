@@ -181,16 +181,44 @@ fn pick_image_dialog(app: AppHandle) -> Result<Option<AssetRef>, String> {
 
 #[tauri::command]
 fn open_in_browser(app: AppHandle, path: String) -> Result<(), String> {
-    // http, https, mailto e tel passam como estao: o sistema resolve.
-    let url = if path.starts_with("http://")
+    // http, https, mailto and tel pass as-is: the system resolves them.
+    if path.starts_with("http://")
         || path.starts_with("https://")
         || path.starts_with("mailto:")
         || path.starts_with("tel:")
     {
-        path
-    } else {
-        format!("file:///{}", path.replace('\\', "/"))
-    };
+        app.opener()
+            .open_path(path, None::<&str>)
+            .map_err(|e| format!("não foi possível abrir no navegador: {e}"))?;
+        return Ok(());
+    }
+
+    // For file paths, validate they are under allowed directories
+    let path_buf = std::path::PathBuf::from(&path);
+    let canonical_path = std::fs::canonicalize(&path_buf)
+        .map_err(|e| format!("não foi possível resolver caminho {path}: {e}"))?;
+
+    // Check if path is under user home directory
+    let home_dir = dirs::home_dir().ok_or("não foi possível obter diretório home")?;
+    let canonical_home = std::fs::canonicalize(&home_dir)
+        .map_err(|e| format!("não foi possível resolver home: {e}"))?;
+
+    // Also allow paths under common project directories (current working dir, etc.)
+    let cwd = std::env::current_dir()
+        .map_err(|e| format!("não foi possível obter diretório atual: {e}"))?;
+    let canonical_cwd = std::fs::canonicalize(&cwd)
+        .map_err(|e| format!("não foi possível resolver diretório atual: {e}"))?;
+
+    let under_home = canonical_path.starts_with(&canonical_home);
+    let under_cwd = canonical_path.starts_with(&canonical_cwd);
+
+    if !under_home && !under_cwd {
+        return Err(format!(
+            "caminho não permitido: {path} (fora de diretórios permitidos)"
+        ));
+    }
+
+    let url = format!("file:///{}", canonical_path.to_string_lossy().replace('\\', "/"));
     app.opener()
         .open_path(url, None::<&str>)
         .map_err(|e| format!("não foi possível abrir no navegador: {e}"))

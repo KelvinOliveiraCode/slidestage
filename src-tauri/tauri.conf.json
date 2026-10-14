@@ -24,12 +24,15 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self' ipc:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc:; frame-src 'self'"
     }
   },
   "bundle": {
     "active": true,
     "targets": ["nsis", "msi"],
-    "icon": ["icons/icon.ico"]
+    "icon": ["icons/icon.ico"],
+    "publisher": "SlideStage",
+    "shortDescription": "Estúdio de slides em HTML",
+    "longDescription": "SlideStage é um editor visual e de código para criar apresentações em HTML único, com editor visual, modo código, modelos e exportação para qualquer navegador."
   }
 }

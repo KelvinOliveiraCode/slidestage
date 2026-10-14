@@ -110,6 +110,8 @@ pub fn is_remote(original: &str) -> bool {
 }
 
 /// Resolve um caminho relativo do documento contra o diretório do arquivo.
+/// Canonicaliza o caminho e garante que está dentro do diretório base permitido
+/// ou no diretório home do usuário.
 pub fn resolve_asset(base_dir: &str, original: &str) -> Option<String> {
     if is_remote(original) {
         return None;
@@ -118,18 +120,72 @@ pub fn resolve_asset(base_dir: &str, original: &str) -> Option<String> {
     if clean.is_empty() {
         return None;
     }
+    let base_path = std::path::Path::new(base_dir);
     let joined = if clean.starts_with('/') || clean.starts_with('\\') {
         std::path::PathBuf::from(&clean)
     } else {
-        std::path::Path::new(base_dir).join(&clean)
+        base_path.join(&clean)
     };
-    // Barra para frente sempre: o frontend guarda o caminho como texto e o
-    // Windows aceita '/' tanto para ler quanto para exibir.
+
+    // Try to canonicalize to resolve symlinks and normalize.
+    // If the file doesn't exist yet, fall back to lexical normalization
+    // but still check for path traversal attempts.
+    let canonical_base = std::fs::canonicalize(base_path).ok();
+    let canonical_joined = std::fs::canonicalize(&joined).ok();
+
+    let (base_for_check, joined_for_check) = match (canonical_base, canonical_joined) {
+        (Some(cb), Some(cj)) => (cb, cj),
+        _ => {
+            // Fallback: use lexical normalization (no symlink resolution)
+            // but still validate the path doesn't escape the base directory
+            let lex_base = std::path::Path::new(base_dir).join(".").components().collect::<std::path::PathBuf>();
+            let lex_joined = joined.components().collect::<std::path::PathBuf>();
+            (lex_base, lex_joined)
+        }
+    };
+
+    // Ensure the resolved path is under the base directory
+    let under_base = joined_for_check.starts_with(&base_for_check);
+
+    // Also allow paths under user home directory (for shared assets)
+    let under_home = dirs::home_dir()
+        .and_then(|home| std::fs::canonicalize(&home).ok())
+        .map(|canonical_home| joined_for_check.starts_with(&canonical_home))
+        .unwrap_or(false);
+
+    if !under_base && !under_home {
+        return None;
+    }
+
     Some(joined.to_string_lossy().replace('\\', "/"))
 }
 
-/// Monta a data URL completa de um arquivo.
+/// Maximum asset size for embedding (10 MB default).
+/// Can be overridden by setting the SLIDESTAGE_MAX_ASSET_SIZE_MB environment variable.
+pub fn max_asset_size() -> u64 {
+    std::env::var("SLIDESTAGE_MAX_ASSET_SIZE_MB")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .map(|mb| mb * 1024 * 1024)
+        .unwrap_or(10 * 1024 * 1024) // 10 MB default
+}
+
+/// Monta a data URL completa de um arquivo, com limite de tamanho.
 pub fn data_url_for(path: &str) -> Result<String, String> {
+    data_url_for_with_limit(path, max_asset_size())
+}
+
+/// Monta a data URL completa de um arquivo com limite de tamanho customizado.
+pub fn data_url_for_with_limit(path: &str, max_size: u64) -> Result<String, String> {
+    let metadata = std::fs::metadata(path).map_err(|e| format!("não foi possível ler metadados de {path}: {e}"))?;
+    let file_size = metadata.len();
+    if file_size > max_size {
+        return Err(format!(
+            "arquivo {path} excede o limite de {} bytes ({} MB)",
+            max_size,
+            max_size / (1024 * 1024)
+        ));
+    }
     let bytes = std::fs::read(path).map_err(|e| format!("não foi possível ler {path}: {e}"))?;
     Ok(format!(
         "data:{};base64,{}",
@@ -179,5 +235,34 @@ mod tests {
             Some("C:/deck/img/foto.png".into())
         );
         assert_eq!(resolve_asset("C:/deck", "https://x.com/a.png"), None);
+    }
+
+    #[test]
+    fn data_url_rejeita_arquivo_grande() {
+        use std::fs;
+        use std::io::Write;
+        let dir = tempfile::tempdir().unwrap();
+        let large_file = dir.path().join("large.bin");
+        let mut f = fs::File::create(&large_file).unwrap();
+        // Write 11 MB (over the 10 MB default limit)
+        f.write_all(&vec![0u8; 11 * 1024 * 1024]).unwrap();
+        let result = data_url_for(&large_file.to_string_lossy());
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("excede o limite"));
+    }
+
+    #[test]
+    fn data_url_aceita_arquivo_pequeno_com_limite_custom() {
+        use std::fs;
+        let dir = tempfile::tempdir().unwrap();
+        let small_file = dir.path().join("small.txt");
+        fs::write(&small_file, b"hello").unwrap();
+        // Use a 1-byte limit - should fail
+        let result = data_url_for_with_limit(&small_file.to_string_lossy(), 1);
+        assert!(result.is_err());
+        // Use a 100-byte limit - should succeed
+        let result = data_url_for_with_limit(&small_file.to_string_lossy(), 100);
+        assert!(result.is_ok());
+        assert!(result.unwrap().starts_with("data:text/plain;base64,"));
     }
 }

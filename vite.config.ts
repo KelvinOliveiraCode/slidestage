@@ -9,6 +9,14 @@ export default defineConfig({
     strictPort: true,
   },
   build: {
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'codemirror': ['codemirror', '@codemirror/lang-html', '@codemirror/state', '@codemirror/view', '@uiw/react-codemirror'],
+          'tauri': ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/plugin-fs', '@tauri-apps/plugin-opener'],
+        },
+      },
+    },
   },
 })

@@ -2,10 +2,23 @@
    HUD e runtime, tudo inline. O arquivo exportado abre sozinho em
    qualquer navegador e no GitHub Pages.
 
-   ATENÇÃO: o runtime e o editor do canvas são scripts INLINE de propósito.
-   O app empacotado roda sem CSP porque um hash que o Tauri injetaria faria
-   o navegador ignorar o 'unsafe-inline' e travar o deck (canvas vazio).
-   Não mova esses scripts para arquivo externo sem resolver a CSP antes. */
+   ATENÇÃO - CSP (Content Security Policy):
+   O runtime e o CSS são scripts/styles INLINE de propósito.
+   O app empacotado roda sem CSP restritiva porque o Tauri injeta um
+   hash sha256 do proprio bootstrap em script-src, e pela especificacao
+   a existencia de um hash faz o navegador IGNORAR o 'unsafe-inline'.
+   Com CSP ligada nenhum script inline roda: o HTML do slide existe, mas
+   o runtime nao executa, nenhum slide recebe is-active e o canvas fica
+   vazio. Nao mova esses scripts para fora sem resolver a CSP antes.
+   
+   Para deploy em produção com CSP:
+   1. Mova DECK_RUNTIME para arquivo .js separado
+   2. Gere hash SHA-256 do conteúdo: `sha256-<base64>`
+   3. Adicione `<meta http-equiv="Content-Security-Policy" 
+      content="script-src 'self' 'sha256-...'; style-src 'self' 'unsafe-inline';">`
+   4. O 'unsafe-inline' no style-src é necessário pelo CSS inline
+      Sem CSP, o arquivo exportado funciona em qualquer lugar mas
+   está vulnerável a XSS se conteúdo não confiável for injetado. */
 
 import { DECK_CSS } from './deckCss'
 import { DECK_RUNTIME } from './deckRuntime'

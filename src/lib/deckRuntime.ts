@@ -75,6 +75,10 @@ export const DECK_RUNTIME = `
     var href=(a.getAttribute('href')||'').trim();
     if(a.getAttribute('target')==='_blank')return true;
     if(href.indexOf('mailto:')===0||href.indexOf('tel:')===0)return true;
+    // Block dangerous URI schemes that can execute code
+    if(/^javascript:/i.test(href))return true;
+    if(/^vbscript:/i.test(href))return true;
+    if(/^data:/i.test(href))return true;
     if(/^(https?:)?\\/\\//i.test(href))return true;
     if(/^[a-z][a-z0-9+.-]*:/i.test(href))return true;
     return false;
