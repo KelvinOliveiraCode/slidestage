@@ -20,7 +20,20 @@
         "minHeight": 680,
         "resizable": true,
         "decorations": true,
-        "backgroundColor": "#0B0D10"
+        "backgroundColor": "#0B0D10",
+        "label": "main"
+      },
+      {
+        "title": "SlideStage - Apresentador",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "decorations": true,
+        "backgroundColor": "#0B0D10",
+        "label": "presenter",
+        "visible": false
       }
     ],
     "security": {

@@ -7,7 +7,8 @@ export type IconName =
   | 'trash' | 'up' | 'down' | 'undo' | 'redo' | 'zoomIn' | 'zoomOut' | 'zoomFit'
   | 'help' | 'close' | 'eye' | 'phone' | 'desktop' | 'upload' | 'file'
   | 'check' | 'alert' | 'external' | 'folder' | 'reload' | 'grip' | 'download'
-  | 'spark' | 'quote' | 'list' | 'mask' | 'cursor' | 'grid' | 'wand'
+  | 'spark' | 'quote' | 'list' | 'mask' | 'cursor' | 'grid' | 'wand' | 'monitor'
+  | 'note' | 'pause' | 'play' | 'refresh' | 'chevron-left' | 'chevron-right'
 
 /* Glifos geometricos desenhados para este app (1.7px de traco, 24x24).
    Nenhuma biblioteca de icones: o conjunto precisa parecer do produto. */
@@ -61,6 +62,13 @@ const PATHS: Record<IconName, string> = {
   cursor: 'M5.5 3.5l12.5 7.5-5.5.9L10 17.5z',
   grid: 'M4.5 4.5h6v6h-6zM13.5 4.5h6v6h-6zM4.5 13.5h6v6h-6zM13.5 13.5h6v6h-6z',
   wand: 'M5 19L16.5 7.5M14.5 4.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1zM19 14l.7 1.8 1.8.7-1.8.7L19 19l-.7-1.8-1.8-.7 1.8-.7z',
+  monitor: 'M3.5 4.5h17a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1zM3.5 19.5h17M8.5 22.5h7',
+  note: 'M4.5 4.5h15v15h-15zM9.5 7.5h.01M9.5 10.5h.01M9.5 13.5h.01M9.5 16.5h.01',
+  pause: 'M6 4.5h4v15H6zM14 4.5h4v15h-4z',
+  play: 'M5 4.5l14 7.5-14 7.5z',
+  refresh: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 4v6',
+  'chevron-left': 'M14 18.5l-6-6 6-6',
+  'chevron-right': 'M10 5.5l6 6-6 6',
 }
 
 type Props = {

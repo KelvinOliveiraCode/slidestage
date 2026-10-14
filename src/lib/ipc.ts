@@ -51,6 +51,12 @@ export const ipc = {
 
   recentsRemove: (path: string): Promise<RecentFile[]> =>
     invoke<RecentFile[]>('recents_remove', { path }),
+
+  openPresenterWindow: (): Promise<void> => invoke<void>('open_presenter_window'),
+
+  closePresenterWindow: (): Promise<void> => invoke<void>('close_presenter_window'),
+
+  isPresenterWindowOpen: (): Promise<boolean> => invoke<boolean>('is_presenter_window_open'),
 }
 
 export function onFileChanged(handler: (path: string) => void): Promise<UnlistenFn> {

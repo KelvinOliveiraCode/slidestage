@@ -18,6 +18,8 @@ export interface SlideMeta {
   /** distancia do deslocamento, ex: 48px */
   dist: string
   bg: string
+  /** notas do apresentador (nao renderizam no slide) */
+  notes: string
 }
 
 export interface ParsedDeck {
@@ -78,6 +80,7 @@ function toSlideMeta(slide: Element, index: number): SlideMeta {
     op: styleVar(styleAttr, '--ss-t-op'),
     dist: styleVar(styleAttr, '--ss-t-dist'),
     bg: styleVar(styleAttr, '--slide-bg'),
+    notes: attr(slide, 'data-notes'),
   }
 }
 
@@ -275,6 +278,7 @@ export function setSlideAttrs(
     ink?: string
     layout?: string
     timing?: { dur?: string; op?: string; dist?: string }
+    notes?: string
   },
 ): string {
   const doc = parse(html)
@@ -309,6 +313,10 @@ export function setSlideAttrs(
   if (patch.layout) {
     const content = slide.querySelector('.ss-content')
     if (content) content.setAttribute('data-layout', patch.layout)
+  }
+  if (patch.notes !== undefined) {
+    if (patch.notes) slide.setAttribute('data-notes', patch.notes)
+    else slide.removeAttribute('data-notes')
   }
   return serialize(doc)
 }

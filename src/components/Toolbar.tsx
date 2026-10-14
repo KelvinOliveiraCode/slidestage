@@ -64,6 +64,7 @@ export function Toolbar() {
           items={[
             { label: 'Salvar como', hint: 'Ctrl+Shift+S', run: () => void store.saveAs() },
             { label: 'Exportar HTML único', run: () => void store.exportFile() },
+            { label: 'Exportar para PDF', hint: 'Ctrl+P', run: () => void store.printDeck() },
             { label: 'Publicar no GitHub Pages', run: () => void store.publish() },
             { label: 'Abrir no navegador', run: () => void store.openInBrowser() },
             { label: 'Mostrar pasta do arquivo', run: () => void store.revealFolder() },
@@ -119,6 +120,12 @@ export function Toolbar() {
         primary
         title="Apresentar em tela cheia (F5)"
         onClick={() => store.setPresenting(true)}
+      />
+      <ToolButton
+        icon="monitor"
+        label={s.presenterOpen ? 'Fechar Apresentador' : 'Apresentador'}
+        title={s.presenterOpen ? 'Fechar janela do apresentador' : 'Abrir janela do apresentador (dual screen)'}
+        onClick={() => void store.togglePresenterWindow()}
       />
       <IconButton
         icon="help"

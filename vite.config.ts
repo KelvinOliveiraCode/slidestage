@@ -11,6 +11,10 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {
+      input: {
+        main: 'index.html',
+        presenter: 'presenter.html',
+      },
       output: {
         manualChunks: {
           'codemirror': ['codemirror', '@codemirror/lang-html', '@codemirror/state', '@codemirror/view', '@uiw/react-codemirror'],

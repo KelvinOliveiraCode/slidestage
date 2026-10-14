@@ -77,6 +77,7 @@ export interface SlideAttrs {
   layout?: Layout
   advance?: boolean
   extraAttrs?: string
+  notes?: string
 }
 
 let slideSeq = 0
@@ -103,9 +104,10 @@ export function slide(children: string | string[], attrs: SlideAttrs = {}): stri
       ? inner
       : `<div class="ss-content" data-layout="${layout}">${inner}</div>`
   const flags = [attrs.advance === false ? ' data-advance="false"' : '', attrs.extraAttrs ?? ''].join('')
+  const notesAttr = attrs.notes ? ` data-notes="${escapeHtml(attrs.notes)}"` : ''
   return `<section class="ss-slide" id="${id}" data-transition="${attrs.transition ?? 'fade'}"${
     style ? ` style="${style}"` : ''
-  }${flags}>${body}</section>`
+  }${flags}${notesAttr}>${body}</section>`
 }
 
 export function h1(text: string, o: AnimOpts = {}): string {

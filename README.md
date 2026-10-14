@@ -94,7 +94,12 @@ ja vai compilada dentro dele. Os instaladores (NSIS e MSI) ficam em
 - Animacao de entrada (9 opções) com duração e atraso.
 - Link (interno, externo, mailto), destino e transformar em botão.
 - Inserir título, texto, botão, lista, forma, citação, espaço e imagem.
-- Propriedades do slide: fundo, transição (tipo, velocidade, opacidade, distância) e layout.
+- Propriedades do slide: fundo, transição (tipo, velocidade, opacidade, distância), layout e **notas do apresentador**.
+
+**Notas do apresentador**
+- Notas por slide (atributo `data-notes`), editadas no Inspetor.
+- Visíveis apenas no modo Apresentador (janela secundária); **não renderizam no slide**, nem no PDF, nem na prévia.
+- Sobrevivem a save/reload/open-em-outro-editor e à duplicação de slides.
 
 **Código**
 - Alternar com Ctrl+E entre visualizar e editar.
@@ -106,12 +111,21 @@ ja vai compilada dentro dele. Os instaladores (NSIS e MSI) ficam em
 - Abrir qualquer HTML (feito aqui ou no VS Code), Ctrl+O.
 - Salvar, salvar como, exportar HTML único (embute imagens locais como data
   URL), publicar `index.html` para GitHub Pages, abrir no navegador.
+- **Exportar para PDF** (Ctrl+P): abre o diálogo de impressão do sistema; o CSS
+  de impressão garante um slide por página, fundos preservados, notas excluídas,
+  sem conteúdo cortado. `print-color-adjust: exact` força impressão de fundos.
 - Se o arquivo mudar no disco (editado fora), o app avisa e oferece recarregar.
 - Lista de recentes com abrir e remover.
 
 **Apresentar**
 - F5 em tela cheia; setas, espaço, Home/End, clique nas laterais, arrastar no
   celular, F para tela cheia do deck, e imprimir em PDF pelo navegador.
+- **Modo Apresentador (dual screen)**: janela secundária nativa (Tauri WebView2)
+  que mostra slide atual, próximo slide, notas do apresentador e cronômetro.
+  - Sincronização via Tauri events (`emit`/`listen`) entre janelas — sem BroadcastChannel nem polling.
+  - Controle de teclado da janela do apresentador (setas, espaço, Home/End, T para timer, R para resetar) comanda a janela da plateia.
+  - Cronômetro preciso (não drift, não reseta na navegação).
+  - Fechar uma janela deixa a outra em estado são.
 
 ## Por que o app nao tem CSP
 
@@ -157,9 +171,10 @@ O que cada parte faz:
 | `src/lib/buildDoc.ts` | Monta o documento HTML único |
 | `src/lib/doc.ts` | Le o documento (slides, títulos) e aplica mutacoes estruturais |
 | `src/lib/editor.ts` | Editor injetado no iframe: selecao, arrastar, resize, texto |
-| `src/lib/store.ts` | Estado, undo/redo, ponte com o Rust |
+| `src/lib/store.ts` | Estado, undo/redo, ponte com o Rust, **sync do apresentador** |
 | `src/lib/templates.ts` | Os 8 modelos |
-| `src-tauri/` | Disco: abrir/salvar, embute assets, observa mudanca externa, recentes |
+| `src/components/PresenterApp.tsx` | Janela do apresentador: slide atual, próximo, notas, timer |
+| `src-tauri/` | Disco: abrir/salvar, embute assets, observa mudanca externa, recentes, **janela presenter** |
 
 O editor injetado é escrito como função TypeScript e serializado com
 `toString()`, então o compilador o verifica (nada de script em string solta).
@@ -178,3 +193,11 @@ detectar edição externa, e a lista de recentes em JSON no diretório de config
 - HTML externo sem a estrutura de slides do app abre e edita, mas o painel de
   slides fica vazio (use um modelo para ganhar a navegacao).
 - O watch de arquivo observa um arquivo por vez, o que está aberto.
+- **Modo Apresentador**: requer WebView2 (já presente no Windows 10/11). A
+  sincronização usa Tauri events; se a janela do apresentador for fechada
+  abruptamente (kill de processo), a janela principal detecta a ausência de
+  heartbeats em ~5s e mostra "Desconectado".
+- **Exportar PDF**: usa o diálogo de impressão do sistema (WebView2 -> Print
+  dialog). Não há engine nativo de PDF no Tauri; o usuário escolhe "Microsoft
+  Print to PDF" ou similar. Decks muito grandes (>100 slides) podem exigir
+  paciência no diálogo de impressão.

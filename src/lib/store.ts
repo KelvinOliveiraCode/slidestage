@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from 'react'
 
 import { baseDirOf, ipc, onFileChanged, type RecentFile } from './ipc'
+import { listen, emit, type UnlistenFn } from '@tauri-apps/api/event'
 import {
   addSlide,
   applyDataUrls,
@@ -87,6 +88,8 @@ export interface State {
   /** incrementa quando o iframe precisa ser recarregado */
   tick: number
   busy: boolean
+  /** janela do apresentador aberta */
+  presenterOpen: boolean
 }
 
 const HISTORY_CAP = 120
@@ -167,6 +170,7 @@ function guardarPrefGuias(valor: boolean): void {
 
 class Store {
   token = makeToken()
+  private presenterControlUnlisten: UnlistenFn | null = null
 
   private state: State = {
     html: buildStarterDeck(),
@@ -191,6 +195,7 @@ class Store {
     externalChange: null,
     tick: 0,
     busy: false,
+    presenterOpen: false,
   }
 
   private listeners = new Set<() => void>()
@@ -483,6 +488,97 @@ class Store {
     this.set({ presenting: on })
   }
 
+  /** Abre a janela do apresentador e inicia a sincronização. */
+  async openPresenterWindow(): Promise<void> {
+    if (this.state.presenterOpen) return
+    try {
+      await ipc.openPresenterWindow()
+      this.set({ presenterOpen: true })
+      await this.startPresenterSync()
+      this.toast('info', 'Janela do apresentador aberta. Use setas/espaço para navegar, T para timer.')
+    } catch (err) {
+      this.toast('error', `Não foi possível abrir a janela do apresentador: ${err instanceof Error ? err.message : err}`)
+    }
+  }
+
+  /** Fecha a janela do apresentador e para a sincronização. */
+  async closePresenterWindow(): Promise<void> {
+    if (!this.state.presenterOpen) return
+    try {
+      await ipc.closePresenterWindow()
+    } catch {
+      /* ignora erro de fechamento */
+    }
+    this.stopPresenterSync()
+    this.set({ presenterOpen: false })
+  }
+
+  /** Alterna a janela do apresentador. */
+  async togglePresenterWindow(): Promise<void> {
+    if (this.state.presenterOpen) {
+      await this.closePresenterWindow()
+    } else {
+      await this.openPresenterWindow()
+    }
+  }
+
+  /** Inicia a escuta de comandos do apresentador e envia estado periódico. */
+  private async startPresenterSync(): Promise<void> {
+    if (this.presenterControlUnlisten) return
+    // Escuta comandos de navegação da janela do apresentador
+    this.presenterControlUnlisten = await listen<{ type: string; direction?: string; index?: number }>(
+      'presenter-control',
+      (event) => {
+        const { direction, index } = event.payload
+        if (direction === 'prev') this.goto(this.state.current - 1)
+        else if (direction === 'next') this.goto(this.state.current + 1)
+        else if (direction === 'goto' && typeof index === 'number') this.goto(index)
+        // Confirma a navegação
+        emit('presenter-control-ack', { type: 'navigate', index: this.state.current })
+      },
+    )
+    // Responde a pedidos de estado inicial
+    const unlistenRequest = await listen('presenter-request-state', () => {
+      this.sendPresenterState()
+    })
+    // Envia estado inicial e periódico
+    this.sendPresenterState()
+    const interval = window.setInterval(() => this.sendPresenterState(), 500)
+    // Guarda a cleanup do interval no unlisten do control (aproximação)
+    const originalUnlisten = this.presenterControlUnlisten
+    this.presenterControlUnlisten = async () => {
+      await originalUnlisten()
+      await unlistenRequest()
+      window.clearInterval(interval)
+    }
+  }
+
+  /** Para a sincronização com a janela do apresentador. */
+  private stopPresenterSync(): void {
+    if (this.presenterControlUnlisten) {
+      this.presenterControlUnlisten()
+      this.presenterControlUnlisten = null
+    }
+  }
+
+  /** Envia o estado atual do deck para a janela do apresentador. */
+  private sendPresenterState(): void {
+    const { slides, current, html } = this.state
+    if (!slides.length) return
+    const currentSlide = slides[current]
+    const nextSlide = slides[current + 1]
+    const state = {
+      html,
+      currentSlide: current,
+      totalSlides: slides.length,
+      slideTitle: currentSlide?.title || `Slide ${current + 1}`,
+      slideNotes: currentSlide?.notes || '',
+      nextSlideTitle: nextSlide?.title || '—',
+      nextSlideNotes: nextSlide?.notes || '',
+    }
+    emit('deck-state-update', state)
+  }
+
   toast(kind: Toast['kind'], text: string): void {
     this.toastSeq += 1
     this.set({ toast: { id: this.toastSeq, kind, text } })
@@ -496,7 +592,10 @@ class Store {
 
   goto(index: number): void {
     const clamped = Math.min(Math.max(index, 0), Math.max(0, this.state.slides.length - 1))
-    this.set({ current: clamped })
+    if (clamped !== this.state.current) {
+      this.set({ current: clamped })
+      if (this.state.presenterOpen) this.sendPresenterState()
+    }
   }
 
   /** Cores que o deck reportou para o slide atual. */
@@ -546,6 +645,12 @@ class Store {
       { source: 'slide-stage-parent', token: this.token, t: 'select', id },
       '*',
     )
+  }
+
+  /** Abre o diálogo de impressão do sistema para o deck (o usuário escolhe 'Salvar como PDF'). */
+  printDeck(): void {
+    const frame = document.querySelector<HTMLIFrameElement>('#stage-frame')
+    frame?.contentWindow?.print()
   }
 
   patchStyle(patch: Record<string, string>): void {
@@ -679,6 +784,10 @@ class Store {
     const section = newSlideSection(layout, [])
     const inner = section.replace(/^<section[^>]*>/, '').replace(/<\/section>$/, '')
     this.commitHtml(replaceSlideInner(this.state.html, id, inner), { reselect: null })
+  }
+
+  setSlideNotes(id: string, notes: string): void {
+    this.commitHtml(setSlideAttrs(this.state.html, id, { notes }))
   }
 
   /* ---------------- inserir elementos ---------------- */

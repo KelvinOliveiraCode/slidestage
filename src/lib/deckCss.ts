@@ -172,13 +172,24 @@ li::before,.ss-list-item::before{
 
 /* ---------- imprimir / PDF ---------- */
 @media print{
-  body.ss-deck{overflow:visible}
-  .ss-stage{position:static}
+  body.ss-deck{overflow:visible;background:#fff;color:#000}
+  .ss-stage{position:static;display:block}
   .ss-slide,.ss-slide.is-active{
-    display:grid !important;position:relative;inset:auto;min-height:94vh;
-    animation:none !important;page-break-after:always;break-after:page;
+    display:grid !important;position:relative;inset:auto;
+    min-height:auto;height:auto;page-break-after:always;break-after:page;
+    animation:none !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    background:var(--slide-bg,var(--ss-bg)) !important;
+    color:var(--slide-ink,var(--ss-ink)) !important;
   }
   .ss-slide.is-active [data-anim]{animation:none !important;opacity:1 !important;transform:none !important;filter:none !important}
   .ss-hud{display:none !important}
+  .ss-editor,#ss-editor-style,#ss-editor-script,base{display:none !important}
+  .ss-content{display:flex;flex-direction:column;gap:clamp(12px,1.6vw,22px);max-width:none;padding:0}
+  .ss-slide[data-transition]{--ss-t-enter:none}
+  img{page-break-inside:avoid;max-width:100%;height:auto}
+  .ss-media{object-fit:cover}
+  /* Garante que caixas absolutas no slide impresso não vazem */
+  .ss-slide>*{max-width:100%;overflow:visible}
 }
 `

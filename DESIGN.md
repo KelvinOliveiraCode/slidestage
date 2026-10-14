@@ -104,3 +104,42 @@ prévia, apresentar. Uma ação primaria por contexto, só ela é preenchida.
 - Toasts em `role="status"` com `aria-live="polite"`.
 - Tamanho mínimo de alvo de toque de 30px nos botões da barra (regra R-03 e
   alvo confortavel para mouse).
+
+## Modo Apresentador (janela secundária)
+
+Segunda janela Tauri (`label: "presenter"`) que abre sob demanda. Layout em
+dois painéis:
+
+- **Esquerda (flexível)**: dois cards empilhados — "Slide Atual" e "Próximo".
+  Cada card mostra miniatura do slide (iframe com o deck HTML) + notas do
+  apresentador em bloco de texto (`pre` com wrap). O card do slide atual tem
+  borda accent e barra de progresso miniatura.
+- **Direita (fixa 340px)**: três seções empilhadas — Cronômetro (display mono
+  grande, botões Iniciar/Pausar/Resetar), Navegação (botões Anterior/Próximo +
+  input numérico para salto direto), Informações (total slides, slide atual,
+  tempo decorrido).
+
+Cores: herda a paleta escura (`--bg`, `--surface`, `--ink`, `--accent`). O
+cronômetro em execução ganha borda e texto accent. Estado "Desconectado" mostra
+ponto vermelho; "Conectado" ponto verde.
+
+Teclado (janela do apresentador tem foco):
+- Setas/Direita/Espaço/PgDown = próximo
+- Setas/Esquerda/Backspace/PgUp = anterior
+- Home = primeiro slide
+- End = último slide
+- T = inicia/pausa timer
+- R = reseta timer
+
+Sincronização: Tauri events (`emit`/`listen`):
+- `deck-state-update` (main → presenter): estado completo do deck a cada 500ms
+- `presenter-control` (presenter → main): comandos de navegação
+- `presenter-control-ack` (main → presenter): confirmação com índice atual
+- `presenter-request-state` (presenter → main): pedido de estado inicial
+
+Nenhum BroadcastChannel, nenhum polling de DOM. Heartbeat implícito pelo
+`deck-state-update` periódico; ausência >5s = "Desconectado".
+
+Impressão/PDF: reusa o mesmo HTML do deck; o `@media print` em `deckCss.ts`
+garante 1 slide/página, fundos (`print-color-adjust: exact`), notas ocultas,
+sem HUD, sem editor.

@@ -291,6 +291,31 @@ fn recents_remove(
     Ok(snapshot)
 }
 
+/// Abre a janela do apresentador (se não estiver aberta).
+#[tauri::command]
+fn open_presenter_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("presenter") {
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Fecha a janela do apresentador (se estiver aberta).
+#[tauri::command]
+fn close_presenter_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("presenter") {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Verifica se a janela do apresentador está aberta.
+#[tauri::command]
+fn is_presenter_window_open(app: AppHandle) -> Result<bool, String> {
+    Ok(app.get_webview_window("presenter").map(|w| w.is_visible().unwrap_or(false)).unwrap_or(false))
+}
+
 fn persistir_recents(app: &AppHandle, items: &[RecentFile]) -> Result<(), String> {
     let dir = config_dir(app)?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -335,6 +360,9 @@ pub fn run() {
             recents_list,
             recents_record,
             recents_remove,
+            open_presenter_window,
+            close_presenter_window,
+            is_presenter_window_open,
         ])
         .run(tauri::generate_context!())
         .expect("falha ao iniciar o SlideStage");

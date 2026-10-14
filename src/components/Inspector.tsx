@@ -574,6 +574,14 @@ export function Inspector() {
               ))}
             </select>
           </Field>
+          <Field label="Notas do apresentador" hint="Visíveis apenas no modo Apresentador; não aparecem no slide nem no PDF">
+            <StableTextArea
+              label="Notas do apresentador"
+              value={slideMeta.notes || ''}
+              rows={4}
+              onCommit={(t) => store.setSlideNotes(slideId, t)}
+            />
+          </Field>
           <label className="check">
             <input
               type="checkbox"

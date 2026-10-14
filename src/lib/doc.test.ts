@@ -145,3 +145,32 @@ describe('assets', () => {
     expect(out).toContain('src="data:image/png;base64,ZZZ"')
   })
 })
+
+describe('notas do apresentador', () => {
+  test('parseDeck le notas do slide', () => {
+    const html = buildStarterDeck().replace(
+      '<section class="ss-slide" id="slide-1" data-transition="fade">',
+      '<section class="ss-slide" id="slide-1" data-transition="fade" data-notes="Minhas notas">',
+    )
+    const parsed = parseDeck(html)
+    expect(parsed.slides[0].notes).toBe('Minhas notas')
+  })
+
+  test('setSlideAttrs define e limpa notas', () => {
+    let html = setSlideAttrs(deck, 'slide-1', { notes: 'Notas do slide 1' })
+    let meta = parseDeck(html).slides[0]
+    expect(meta.notes).toBe('Notas do slide 1')
+
+    html = setSlideAttrs(html, 'slide-1', { notes: '' })
+    meta = parseDeck(html).slides[0]
+    expect(meta.notes).toBe('')
+  })
+
+  test('notas sobrevivem a duplicacao de slide', () => {
+    const html = setSlideAttrs(deck, 'slide-1', { notes: 'Notas originais' })
+    const duplicado = duplicateSlide(html, 'slide-1')
+    // O titulo do primeiro slide vem do kicker "Apresentação"
+    const meta = parseDeck(duplicado).slides.find((s) => s.title === 'Apresentação')
+    expect(meta?.notes).toBe('Notas originais')
+  })
+})
