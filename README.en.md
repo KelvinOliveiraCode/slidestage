@@ -1,127 +1,122 @@
 # slidestage
 
-<div align="center">
-
 **English** · [Português (Brasil)](README.md)
 
-</div>
-
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/) [![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/) [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/) [![MIT License](https://img.shields.io/badge/License-MIT-f4c430?style=flat-square)](LICENSE)
-
-### SlideStage: HTML slide editor with visual canvas and code editing in one Tauri app. Export single-file HTML for GitHub Pages.
-
----
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](#) [![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](#) [![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](#) [![CodeMirror](https://img.shields.io/badge/CodeMirror-6-D50000?style=flat-square&logo=codemirror)](#) [![Vitest](https://img.shields.io/badge/Vitest-46%20tests-6BA81E?style=flat-square&logo=vitest)](#) [![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?style=flat-square&logo=tauri)](#)
 
 ## What it is
 
-SlideStage: HTML slide editor with visual canvas and code editing in one Tauri app. Export single-file HTML for GitHub Pages.
+**SlideStage** is an **HTML slide editor** with a visual canvas and a code editor: build the deck by dragging/positioning slides on the bench, edit each slide's HTML/CSS/JS with CodeMirror, and present live with a **presenter mode** (and a `presenter.html` file). It exports a single HTML file for publishing on GitHub Pages. It is a creative-authoring desktop tool (Tauri) whose web app also runs in the browser.
 
----
+> Note: the previous README described a **finance dashboard** (Recharts, AI assistant) — it does not exist in this repository. Corrected.
 
-## Quick Start
+## Status
 
-```bash
-# Clone and enter
-git clone https://github.com/KelvinOliveiraCode/<repo>.git
-cd <repo>
+Under development (version 0.1.2), working and tested (46 tests). Build validated.
 
-# Install dependencies
-npm install
+## Features
 
-# Development server
-npm run dev
+- **Visual editing canvas** (`Stage`): lays out slides on a gridded bench.
+- **Code editor** (`CodeView`, CodeMirror 6): edits each slide's HTML, in sync with the canvas.
+- **Presenter mode** (`PresenterApp`, `presenter.html`): presents the deck with an overlay.
+- **Slide rail** (`SlideRail`), **toolbar** and a properties **inspector**.
+- **Slide templates** (`TemplateModal`) and a **help modal**.
+- **Single-file HTML export** for publishing.
+- **High-contrast dark theme** (no toggle), decisions in `DESIGN.md`.
+- **Tauri 2** (desktop app) with a Vite web fallback.
 
-# Production build
-npm run build
+## Architecture
 
-# Run tests
-npm test
+React/TS with per-function modules; the logic in `src/lib` (doc, buildDoc, deckCss, deckRuntime, templates, editor, notes) is separated and tested. Components live in `src/components`. `presenter.html` is a second entry for the presenter mode.
+
+```mermaid
+flowchart LR
+    U[User] --> APP[App.tsx - Stage/canvas]
+    APP --> CV[CodeView - CodeMirror]
+    APP --> RAIL[SlideRail]
+    APP --> INSP[Inspector]
+    APP --> PRES[PresenterApp - presentation]
+    LIB[lib: doc, buildDoc, deckRuntime, templates] --> APP
+    APP --> EXP[single-file HTML export]
 ```
 
-## How it works
+## Stack
 
-Arquitetura de componente em arquivo único (`App.tsx`): toda a UI, estado e lógica vivem em um arquivo para simplicidade de deploy e build zero-config.
+- React 18, TypeScript 5.x
+- Vite 5, CodeMirror 6
+- Vitest 2 + jsdom (tests)
+- Tauri 2 (desktop)
 
-Decisões arquiteturais principais:
-- **Estado global** via `useState` + `useMemo` (evita overhead do Context API)
-- **Agregações memoizadas** para gráficos e insights
-- **Dados mock in-line** como constantes TypeScript para prototipagem sem backend
-- **IA baseada em regras** (`getAIResponse`) ,  determinística, offline, custo zero
+## Repository layout
 
----
+```
+slidestage/
+├── src/
+│   ├── App.tsx · main.tsx
+│   ├── components/   # Stage, CodeView, Controls, Inspector, SlideRail,
+│   │                 # Toolbar, TemplateModal, PresenterApp, PresentOverlay, et al.
+│   ├── lib/          # doc, buildDoc, deckCss, deckRuntime, templates,
+│   │                 # editor, notes (+ tests)
+├── presenter.html    # presenter-mode entry
+├── index.html
+├── DESIGN.md         # design direction (dark theme)
+├── exemplos/exemplo-externo.html
+├── package.json · vite.config.ts
+└── (SlideStage.exe committed)  # see HYGIENE
+```
 
-## Capabilities
+## Prerequisites and installation
 
-| Capacidade | Descrição |
-|------------|-------------|
-| Dashboard | 6 cards de métricas (Saldo, Receitas, Despesas, Economia, Investimentos, Patrimônio) |
-| Fluxo de Caixa | Gráfico de barras (7d/30d) com Recharts ,  Receitas, Despesas, Saldo por período |
-| Orçamentos | Orçamentos por categoria com barras de progresso, alertas de estouro |
-| Metas | Anéis de progresso com cálculo de economia mensal e contagem regressiva |
-| Assistente IA | Chat baseado em regras (getAIResponse) ,  análise de gastos, dicas, projeções |
-| Insights | Alertas automáticos: picos de delivery, crescimento patrimonial, breakdown por categoria |
-| Transações | Adicionar/editar receitas/despesas com categorias, tags, seletor de data |
-| Persistência | localStorage ,  estado sobrevive a reload, zero backend |
+Node.js (npm). For the desktop app, [Rust + Tauri prerequisites](https://tauri.app/start/prerequisites/).
 
+```bash
+git clone https://github.com/KelvinOliveiraCode/slidestage.git
+cd slidestage
+npm install
+```
 
----
+## How to run
 
+```bash
+npm run dev          # web app in the browser
+npm test             # vitest run
+npm run build        # production build (tsc --noEmit && vite build)
+npm run preview      # preview the build
+# desktop: npm run tauri dev
+```
 
+## Tests and quality
 
----
+Real run (verified by the agent):
 
-## FAQ
+```bash
+npm test
+# 46 passed (5 files): notes 5, doc 17, templates 6, editor 11 (+)
+npm run build
+# built in 3.73s
+```
 
-<details>
-<summary><strong>What is this project?</strong></summary>
+There is no CI configured in this repository.
 
-A React/TypeScript study/project demonstrating core concepts.
+## Technical decisions and trade-offs
 
-</details>
+- **In-sync canvas + code editor**: visual-first and code-first users work on the same document.
+- **Single high-contrast dark theme** (no toggle): a tool-authoring decision documented in `DESIGN.md`.
+- **Testable logic separated in `src/lib`**: deck generation/parsing validated without UI.
+- **Single-file HTML export**: the published deck is self-contained and easy to host.
 
-<details>
-<summary><strong>How do I run it?</strong></summary>
+## Known limitations and roadmap
 
-See [Quick Start](#quick-start) for copy-paste commands.
+- Under development (v0.1.2); the full desktop flow depends on the Rust/Tauri toolchain.
+- No CI configured.
+- A `SlideStage.exe` binary is committed (move to Releases — see `HYGIENE.md`).
 
-</details>
+## Development process
 
-<details>
-<summary><strong>Are there tests?</strong></summary>
+An individual project by Kelvin Oliveira, built with orchestrated AI agents and reviewed by the author. The editor architecture, the presenter mode and the review are the author's.
 
-No automated tests in this repository.
+## License and author
 
-</details>
+This repository has **no license file** (no `LICENSE`). Copyright (c) Kelvin Rebelo de Oliveira.
 
-<details>
-<summary><strong>Can I use this in production?</strong></summary>
-
-This is a **study/portfolio project**. Review and harden (auth, persistence, monitoring, etc.) before production use.
-
-</details>
-
-
-
----
-
-## Documentation
-
-- **Source Code** ,  Browse the `src/` directory for implementation details
-- **API Reference** ,  TypeScript types in source
-- **Architecture Diagram** ,  See [architecture.mermaid](docs/architecture.mermaid) (if present)
-- **Changelog** ,  [CHANGELOG.md](CHANGELOG.md) (if present)
-- **Contributing** ,  [CONTRIBUTING.md](CONTRIBUTING.md) (if present)
-
-## License
-
-[MIT](LICENSE) ,  Kelvin Oliveira
-
----
-
-<div align="center">
-
-**Built with** · TypeScript + React + Vite + Tailwind
-
-**Author** · [Kelvin Oliveira](https://github.com/KelvinOliveiraCode) · [Portfolio](https://kelvinoliveiracode.github.io/portfolio/)
-
-</div>
+**Author**: [Kelvin Oliveira](https://github.com/KelvinOliveiraCode) · [Portfolio](https://kelvinoliveiracode.github.io/portfolio/)
